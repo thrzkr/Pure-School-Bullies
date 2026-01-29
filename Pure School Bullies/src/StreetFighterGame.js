@@ -7,10 +7,12 @@ import { getContext } from './utils/context.js';
 import { BattleScene } from './scenes/BattleScene.js';
 import { GAME_SPEED } from './constants/game.js';
 import { StartScene } from './scenes/StartScene.js';
+import { MenuScene } from './scenes/MenuScene.js';
 import { ContextHandler } from './engine/ContextHandler.js';
+import { initAudioSettings } from './states/settingsState.js';
 
 export class StreetFighterGame {
-	context = getContext();
+	context = null;
 
 	frameTime = {
 		secondsPassed: 0,
@@ -21,7 +23,7 @@ export class StreetFighterGame {
 	sceneStarted = false;
 	nextScene = undefined;
 
-	contextHandler = new ContextHandler(this.context);
+	contextHandler = null;
 
 	changeScene = (SceneClass) => {
 		this.contextHandler.startDimDown();
@@ -36,7 +38,10 @@ export class StreetFighterGame {
 	};
 
 	constructor() {
-		this.startScene(StartScene);
+		this.context = getContext();
+		this.contextHandler = new ContextHandler(this.context);
+		initAudioSettings();
+		this.startScene(MenuScene);
 	}
 
 	updateScenes = () => {

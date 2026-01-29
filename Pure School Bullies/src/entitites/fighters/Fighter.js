@@ -1,4 +1,4 @@
-import * as control from '../../engine/InputHandler.js';
+import * as originalControl from '../../engine/InputHandler.js';
 import {
 	SCENE_WIDTH,
 	STAGE_FLOOR,
@@ -499,6 +499,11 @@ export class Fighter {
 		this.velocity = { x: 0, y: 0 };
 	};
 
+	getControl = () => {
+		// Use AI control wrapper if available (single player mode), otherwise use original
+		return window._battleSceneControl || originalControl;
+	};
+
 	handleIdleInit = () => {
 		this.resetVelocities();
 		this.opponent.attackStruck = false;
@@ -509,25 +514,25 @@ export class Fighter {
 			this.changeState(FighterState.VICTORY, time);
 			return;
 		}
-		if (control.isUp(this.playerId, this.direction))
+		if (this.getControl().isUp(this.playerId, this.direction))
 			this.changeState(FighterState.JUMP_START, time);
-		else if (control.isDown(this.playerId))
+		else if (this.getControl().isDown(this.playerId))
 			this.changeState(FighterState.CROUCH_DOWN, time);
-		else if (control.isForward(this.playerId, this.direction))
+		else if (this.getControl().isForward(this.playerId, this.direction))
 			this.changeState(FighterState.WALK_FORWARD, time);
-		else if (control.isBackward(this.playerId, this.direction))
+		else if (this.getControl().isBackward(this.playerId, this.direction))
 			this.changeState(FighterState.WALK_BACKWARD, time);
-		else if (control.isLightPunch(this.playerId))
+		else if (this.getControl().isLightPunch(this.playerId))
 			this.changeState(FighterState.LIGHT_PUNCH, time);
-		else if (control.isMediumPunch(this.playerId))
+		else if (this.getControl().isMediumPunch(this.playerId))
 			this.changeState(FighterState.MEDIUM_PUNCH, time);
-		else if (control.isHeavyPunch(this.playerId))
+		else if (this.getControl().isHeavyPunch(this.playerId))
 			this.changeState(FighterState.HEAVY_PUNCH, time);
-		else if (control.isLightKick(this.playerId))
+		else if (this.getControl().isLightKick(this.playerId))
 			this.changeState(FighterState.LIGHT_KICK, time);
-		else if (control.isMediumKick(this.playerId))
+		else if (this.getControl().isMediumKick(this.playerId))
 			this.changeState(FighterState.MEDIUM_KICK, time);
-		else if (control.isHeavyKick(this.playerId))
+		else if (this.getControl().isHeavyKick(this.playerId))
 			this.changeState(FighterState.HEAVY_KICK, time);
 
 		const newDirection = this.getDirection();
@@ -539,44 +544,44 @@ export class Fighter {
 	};
 
 	handleWalkForward = (time) => {
-		if (!control.isForward(this.playerId, this.direction))
+		if (!this.getControl().isForward(this.playerId, this.direction))
 			this.changeState(FighterState.IDLE, time);
-		else if (control.isUp(this.playerId))
+		else if (this.getControl().isUp(this.playerId))
 			this.changeState(FighterState.JUMP_FORWARD, time);
-		else if (control.isDown(this.playerId))
+		else if (this.getControl().isDown(this.playerId))
 			this.changeState(FighterState.CROUCH_DOWN, time);
-		else if (control.isLightPunch(this.playerId))
+		else if (this.getControl().isLightPunch(this.playerId))
 			this.changeState(FighterState.LIGHT_PUNCH, time);
-		else if (control.isMediumPunch(this.playerId))
+		else if (this.getControl().isMediumPunch(this.playerId))
 			this.changeState(FighterState.MEDIUM_PUNCH, time);
-		else if (control.isHeavyPunch(this.playerId))
+		else if (this.getControl().isHeavyPunch(this.playerId))
 			this.changeState(FighterState.HEAVY_PUNCH, time);
-		else if (control.isLightKick(this.playerId))
+		else if (this.getControl().isLightKick(this.playerId))
 			this.changeState(FighterState.LIGHT_KICK, time);
-		else if (control.isMediumKick(this.playerId))
+		else if (this.getControl().isMediumKick(this.playerId))
 			this.changeState(FighterState.MEDIUM_KICK, time);
-		else if (control.isHeavyKick(this.playerId))
+		else if (this.getControl().isHeavyKick(this.playerId))
 			this.changeState(FighterState.HEAVY_KICK, time);
 	};
 
 	handleWalkBackward = (time) => {
-		if (!control.isBackward(this.playerId, this.direction))
+		if (!this.getControl().isBackward(this.playerId, this.direction))
 			this.changeState(FighterState.IDLE, time);
-		else if (control.isUp(this.playerId))
+		else if (this.getControl().isUp(this.playerId))
 			this.changeState(FighterState.JUMP_BACKWARD, time);
-		else if (control.isDown(this.playerId))
+		else if (this.getControl().isDown(this.playerId))
 			this.changeState(FighterState.CROUCH_DOWN, time);
-		else if (control.isLightPunch(this.playerId))
+		else if (this.getControl().isLightPunch(this.playerId))
 			this.changeState(FighterState.LIGHT_PUNCH, time);
-		else if (control.isMediumPunch(this.playerId))
+		else if (this.getControl().isMediumPunch(this.playerId))
 			this.changeState(FighterState.MEDIUM_PUNCH, time);
-		else if (control.isHeavyPunch(this.playerId))
+		else if (this.getControl().isHeavyPunch(this.playerId))
 			this.changeState(FighterState.HEAVY_PUNCH, time);
-		else if (control.isLightKick(this.playerId))
+		else if (this.getControl().isLightKick(this.playerId))
 			this.changeState(FighterState.LIGHT_KICK, time);
-		else if (control.isMediumKick(this.playerId))
+		else if (this.getControl().isMediumKick(this.playerId))
 			this.changeState(FighterState.MEDIUM_KICK, time);
-		else if (control.isHeavyKick(this.playerId))
+		else if (this.getControl().isHeavyKick(this.playerId))
 			this.changeState(FighterState.HEAVY_KICK, time);
 	};
 
@@ -584,7 +589,7 @@ export class Fighter {
 		if (this.isAnimationCompleted()) {
 			this.changeState(FighterState.CROUCH, time);
 		}
-		if (!control.isDown(this.playerId)) {
+		if (!this.getControl().isDown(this.playerId)) {
 			this.currentState = FighterState.CROUCH_UP;
 			this.setAnimationFrame(
 				Math.max(
@@ -598,7 +603,7 @@ export class Fighter {
 	};
 
 	handleCrouch = (time) => {
-		!control.isDown(this.playerId) &&
+		!this.getControl().isDown(this.playerId) &&
 			this.changeState(FighterState.CROUCH_UP, time);
 
 		const newDirection = this.getDirection();
@@ -626,9 +631,9 @@ export class Fighter {
 
 	handleJumpStartState = (time) => {
 		if (this.isAnimationCompleted()) {
-			if (control.isBackward(this.playerId, this.direction))
+			if (this.getControl().isBackward(this.playerId, this.direction))
 				this.changeState(FighterState.JUMP_BACKWARD, time);
-			else if (control.isForward(this.playerId, this.direction))
+			else if (this.getControl().isForward(this.playerId, this.direction))
 				this.changeState(FighterState.JUMP_FORWARD, time);
 			else this.changeState(FighterState.JUMP_UP, time);
 		}
@@ -674,7 +679,7 @@ export class Fighter {
 
 	handleLightPunch = (time) => {
 		if (this.animationFrame < 2) return;
-		if (control.isLightPunch(this.playerId)) this.handleLightAttackReset(time);
+		if (this.getControl().isLightPunch(this.playerId)) this.handleLightAttackReset(time);
 		if (!this.isAnimationCompleted()) return;
 		this.changeState(FighterState.IDLE, time);
 	};
@@ -784,7 +789,7 @@ export class Fighter {
 
 	handleLightKick = (time) => {
 		if (this.animationFrame < 2) return;
-		if (control.isLightKick(this.playerId)) this.handleLightAttackReset(time);
+		if (this.getControl().isLightKick(this.playerId)) this.handleLightAttackReset(time);
 		if (!this.isAnimationCompleted()) return;
 		this.changeState(FighterState.IDLE, time);
 	};

@@ -29,3 +29,6 @@ export const soundHitIds = {
 };
 
 export const GLOBAL_VOLUME = 0.7;
+
+// Menu theme audio element id
+export const soundMenuId = 'sound-menu-theme';

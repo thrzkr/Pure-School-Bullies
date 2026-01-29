@@ -25,7 +25,14 @@ import { FpsCounter } from '../entitites/overlays/FpsCounter.js';
 import { StatusBar } from '../entitites/overlays/StatusBar.js';
 import { KenStage } from '../entitites/stage/KenStage.js';
 import { gameState, resetGameState } from '../states/gameState.js';
-import { StartScene } from './StartScene.js';
+import { matchState, recordRoundWin, isMatchOver, getMatchWinnerId } from '../states/matchState.js';
+import { getSelection } from '../states/selectionState.js';
+import { MenuScene } from './MenuScene.js';
+import { PauseScene } from './PauseScene.js';
+import { AIController } from '../engine/AIController.js';
+import * as originalControl from '../engine/InputHandler.js';
+import { stopSound } from '../engine/SoundHandler.js';
+import { soundMenuId } from '../constants/sounds.js';
 
 export class BattleScene {
 	image = document.getElementById('Winner');
@@ -36,6 +43,11 @@ export class BattleScene {
 	hurtTimer = 0;
 	battleEnded = false;
 	winnerId = undefined;
+	isPaused = false;
+	pauseScene = null;
+	aiController = null;
+	isSinglePlayer = false;
+	control = {};
 
 	constructor(changeScene) {
 		this.changeScene = changeScene;
@@ -46,8 +58,67 @@ export class BattleScene {
 			new FpsCounter(),
 		];
 		resetGameState();
+		
+		// Apply character selections from CharacterSelectScene
+		const selection = getSelection();
+		gameState.fighters[0].id = selection.player1;
+		gameState.fighters[1].id = selection.player2;
+		
+		// Setup single player mode if needed
+		this.isSinglePlayer = selection.gameMode === 'single';
+		if (this.isSinglePlayer) {
+			this.aiController = new AIController(gameState);
+			this.setupAIControlOverrides();
+			// Set global control wrapper for AI
+			window._battleSceneControl = this.control;
+		} else {
+			// Use original control functions for multiplayer
+			this.control = originalControl;
+		}
+		
+		// Stop menu music (if any) when entering battle
+		const menuMusic = document.getElementById(soundMenuId) || document.getElementById('kensTheme');
+		if (menuMusic) {
+			try { stopSound(menuMusic); } catch (e) { /* ignore */ }
+		}
+		
 		this.startRound();
+		
+		// Add pause input listener
+		window.addEventListener('keydown', this.handlePauseInput.bind(this));
 	}
+
+	setupAIControlOverrides = () => {
+		// Create wrapper functions that can be called by Fighter.js
+		const controlFunctions = [
+			'isUp',
+			'isDown',
+			'isForward',
+			'isBackward',
+			'isLightPunch',
+			'isMediumPunch',
+			'isHeavyPunch',
+			'isLightKick',
+			'isMediumKick',
+			'isHeavyKick',
+		];
+
+		controlFunctions.forEach(funcName => {
+			this.control[funcName] = (id, ...args) => {
+				// If player 2 in single player mode, use AI
+				if (id === 1 && this.isSinglePlayer) {
+					return this.aiController.isInputActive(this.convertFunctionNameToInputName(funcName));
+				}
+				// Otherwise use original control function
+				return originalControl[funcName](id, ...args);
+			};
+		});
+	};
+
+	convertFunctionNameToInputName = (funcName) => {
+		// Convert isLightPunch -> lightPunch, etc.
+		return funcName.charAt(2).toLowerCase() + funcName.slice(3);
+	};
 
 	getFighterClass = (id) => {
 		switch (id) {
@@ -79,6 +150,11 @@ export class BattleScene {
 	};
 
 	updateFighters = (time, context) => {
+		// Update AI if in single player mode
+		if (this.isSinglePlayer && this.aiController) {
+			this.aiController.update(time);
+		}
+		
 		this.fighters.map((fighter) => {
 			if (this.hurtTimer > time.previous) {
 				fighter.updateHurtShake(time, this.hurtTimer);
@@ -136,9 +212,18 @@ export class BattleScene {
 		this.shadows = this.fighters.map((fighter) => new Shadow(fighter));
 	};
 
-	goToStartScene = () => {
+	goToNextScene = () => {
 		setTimeout(() => {
-			this.changeScene(StartScene);
+			// Record the round winner
+			recordRoundWin(this.winnerId);
+			
+			// If match is over, go to MenuScene
+			// Otherwise, restart battle for next round
+			if (isMatchOver()) {
+				this.changeScene(MenuScene);
+			} else {
+				this.changeScene(BattleScene);
+			}
 		}, 6000);
 	};
 
@@ -156,11 +241,20 @@ export class BattleScene {
 			this.fighters[0].changeState(FighterState.KO, time);
 			this.winnerId = 1;
 		}
-		this.goToStartScene();
+		this.goToNextScene();
 	};
 
 	updateOverlays = (time) => {
 		this.overlays.map((overlay) => overlay.update(time));
+	};
+
+	handlePauseInput = (e) => {
+		if (e.key === 'Escape' && !this.battleEnded) {
+			this.isPaused = !this.isPaused;
+			if (this.isPaused && !this.pauseScene) {
+				this.pauseScene = new PauseScene(this);
+			}
+		}
 	};
 
 	updateFighterHP = (time) => {
@@ -169,12 +263,14 @@ export class BattleScene {
 				this.fighters[index].opponent.victory = true;
 				this.winnerId = 1 - index;
 				this.battleEnded = true;
-				this.goToStartScene();
+				this.goToNextScene();
 			}
 		});
 	};
 
 	update = (time) => {
+		if (this.isPaused) return;
+		
 		this.updateFighters(time);
 		this.updateShadows(time);
 		this.stage.update(time);
@@ -206,6 +302,11 @@ export class BattleScene {
 		this.drawShadows(context);
 		this.drawFighters(context);
 		this.entities.draw(context, this.camera);
+		
+		// Draw pause menu if paused
+		if (this.isPaused && this.pauseScene) {
+			this.pauseScene.draw(context);
+		}
 		this.stage.drawForeground(context, this.camera);
 		this.drawOverlays(context);
 	};

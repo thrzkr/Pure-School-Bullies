@@ -7,15 +7,68 @@
 		<title>Street Fighter by Mayank Jain</title>
 		<link rel="stylesheet" href="src/style.css" />
 		<script type="module" src="src/index.js"></script>
+
+		<style>
+			/* Fullscreen-friendly layout */
+			html, body, main {
+				width: 100%;
+				height: 100%;
+				margin: 0;
+				padding: 0;
+			}
+
+			main {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				background: #000; /* fallback background */
+			}
+
+			canvas {
+				max-width: 100%;
+				height: auto;
+				display: block;
+				border: 2px solid #FFD700;
+				background: #000;
+			}
+
+			/* When in fullscreen mode scale canvas to fill */
+			body.isFullscreen canvas,
+			:fullscreen canvas {
+				width: 100vw !important;
+				height: 100vh !important;
+				max-width: none !important;
+			}
+
+			#fullscreenBtn {
+				position: fixed;
+				top: 16px;
+				right: 16px;
+				z-index: 9999;
+				padding: 8px 12px;
+				background: rgba(0,0,0,0.6);
+				color: #fff;
+				border: 1px solid rgba(255,255,255,0.12);
+				border-radius: 4px;
+				cursor: pointer;
+			}
+		</style>
 	</head>
 
 	<body>
+		<button id="fullscreenBtn">Enter Fullscreen</button>
 		<main>
-			<canvas width="382px" height="224px"></canvas>
+			<canvas width="382" height="224"></canvas>
 		</main>
 		<audio
 			id="kensTheme"
 			src="./public/sounds/kens-theme.ogg"
+			preload="auto"
+			loop
+		></audio>
+		<audio
+			id="sound-menu-theme"
+			src="./public/sounds/menu-theme.ogg"
 			preload="auto"
 			loop
 		></audio>
@@ -89,5 +142,45 @@
 		<img id="Controls" src="./public/images/Controls.png" />
 		<img id="Logo" src="./public/images/logo.png" />
 		<img id="Winner" src="./public/images/winnerText.png" />
+	</body>
+		<script>
+			// Fullscreen toggle logic
+			(function () {
+				const fsBtn = document.getElementById('fullscreenBtn');
+				const canvas = document.querySelector('canvas');
+
+				function updateButton() {
+					const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+					fsBtn.textContent = isFs ? 'Exit Fullscreen' : 'Enter Fullscreen';
+					if (isFs) document.body.classList.add('isFullscreen'); else document.body.classList.remove('isFullscreen');
+				}
+
+				fsBtn.addEventListener('click', async () => {
+					try {
+						if (!document.fullscreenElement) {
+							if (document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen();
+							else if (document.documentElement.webkitRequestFullscreen) document.documentElement.webkitRequestFullscreen();
+						} else {
+							if (document.exitFullscreen) await document.exitFullscreen();
+							else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+						}
+					} catch (e) {
+						console.warn('Fullscreen toggle failed', e);
+					}
+				});
+
+				document.addEventListener('fullscreenchange', updateButton);
+				document.addEventListener('webkitfullscreenchange', updateButton);
+				document.addEventListener('mozfullscreenchange', updateButton);
+				document.addEventListener('msfullscreenchange', updateButton);
+
+				// Double-click canvas to toggle fullscreen as well
+				if (canvas) {
+					canvas.addEventListener('dblclick', () => fsBtn.click());
+				}
+
+				updateButton();
+			})();
+		</script>
 	</body>
 </html>

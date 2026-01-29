@@ -1,6 +1,8 @@
 import { SCENE_WIDTH } from '../constants/Stage.js';
 import { LOGO_FLASH_DELAY } from '../constants/battle.js';
 import { BattleScene } from './BattleScene.js';
+import { MenuScene } from './MenuScene.js';
+import { matchState, isMatchOver, getMatchWinnerId, resetMatchState } from '../states/matchState.js';
 
 export class StartScene {
 	image = document.getElementById('Controls');
@@ -14,14 +16,17 @@ export class StartScene {
 	brightness = 0;
 	contrast = 3;
 	sceneEnded = false;
+	showingMatchOver = false;
 
 	endStartScene = () => {
-		this.changeScene(BattleScene);
+		// Always go to MenuScene
 		window.removeEventListener('click', this.endStartScene);
+		this.changeScene(MenuScene);
 	};
 
 	constructor(changeScene) {
 		this.changeScene = changeScene;
+		this.showingMatchOver = isMatchOver();
 		window.removeEventListener('click', this.endStartScene);
 		window.addEventListener('click', this.endStartScene);
 	}

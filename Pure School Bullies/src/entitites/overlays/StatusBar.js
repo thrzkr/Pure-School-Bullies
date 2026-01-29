@@ -12,6 +12,7 @@ import {
 import { FighterId } from '../../constants/fighter.js';
 import { FPS } from '../../constants/game.js';
 import { gameState } from '../../states/gameState.js';
+import { matchState } from '../../states/matchState.js';
 import { drawFrame } from '../../utils/context.js';
 
 // [FIXED] Was not /100 in Critical Health Constant TODO : KO flashing even at full HP
@@ -256,9 +257,6 @@ export class StatusBar {
 		this.drawScoreLabel(context, 'P1', 4);
 		this.drawScore(context, gameState.fighters[0].score, 45);
 
-		this.drawScoreLabel(context, 'May', 133);
-		this.drawScore(context, 50000, 177);
-
 		this.drawScoreLabel(context, 'P2', 269);
 		this.drawScore(context, gameState.fighters[1].score, 309);
 	}
@@ -269,5 +267,17 @@ export class StatusBar {
 		this.drawHealthBar(context);
 		this.drawTime(context);
 		this.drawNames(context);
+		this.drawRoundInfo(context);
+	}
+
+	drawRoundInfo(context) {
+		// Display current round and match score
+		context.fillStyle = '#FFD700';
+		context.font = 'bold 11px Arial';
+		const roundText = `Round ${matchState.currentRound}/3`;
+		const scoreText = `${matchState.roundsWon[0]}-${matchState.roundsWon[1]}`;
+		
+		context.fillText(roundText, 160, 10);
+		context.fillText(scoreText, 160, 22);
 	}
 }
